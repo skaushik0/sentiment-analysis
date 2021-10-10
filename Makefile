@@ -1,4 +1,6 @@
-# Builds the binary and copies it to the Docker container.
+# Builds the Docker images for "sentiment-analysis", and deploys to GKE.
+
+SHELL           := /bin/bash
 .DEFAULT_GOAL   := all
 SRC_DIR         := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PROG_NAME       := cmu-14-848-sa
@@ -24,6 +26,7 @@ GKE_NODE_TAG    := nodes-gp
 
 K8S_DEPLOY_FILE := $(SRC_DIR)/k8s-deploy.yaml
 K8S_INGESS_NAME := ingress/sa-ing
+K8S_INGRESS_IP  :=
 K8S_IP_POLL_CMD := kubectl get $(K8S_INGESS_NAME) -o \
                                jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
@@ -67,11 +70,9 @@ k8s-deploy:
 
 # The ingress on GKE takes a while to load and get the public IP.
 k8s-poll-ingress-ip:
-	INGRESS_STATE="$(shell $(K8S_IP_POLL_CMD))";                         \
-	until [ -n $$INGRESS_STATE ]; do                                     \
+	@while [ -z "$(shell $(K8S_IP_POLL_CMD))" ]; do                      \
 		echo "Waiting for ingress: $(K8S_INGESS_NAME) to be created..."; \
 		sleep 10;                                                        \
-		INGRESS_STATE="$(shell $(K8S_IP_POLL_CMD))";                     \
     done
 
 # Show the URL to the web-app.
@@ -84,7 +85,7 @@ k8s-show:
 # Delete resources and the Kubernetes cluster.
 k8s-clean:
 	kubectl delete -f $(K8S_DEPLOY_FILE)
-	# gcloud container clusters delete --zone $(GKE_ZONE) $(PROG_NAME)
+	gcloud container clusters delete --zone $(GKE_ZONE) $(PROG_NAME)
 
 all: init build push k8s-cluster-create k8s-get-kubeconfig \
 	 k8s-deploy k8s-poll-ingress-ip k8s-show
