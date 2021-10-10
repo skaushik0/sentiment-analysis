@@ -53,11 +53,11 @@ push:
 #    run `gcloud init' to configure access to Google Cloud
 #    Platform.
 k8s-cluster-create:
-	gcloud container clusters create $(PROG_NAME) --labels $(GKE_LABELS) \
-	       --machine-type $(GKE_MACH_TYPE) --num-nodes $(GKE_MIN_NODES)  \
-		   --max-nodes $(GKE_MAX_NODES) --min-nodes $(GKE_MIN_NODES)     \
-		   --tags $(GKE_NODE_TAG) --autoscaling-profile $(GKE_UTIL_PROF) \
-		   --zone $(GKE_ZONE)
+	gcloud container clusters create $(PROG_NAME) --labels $(GKE_LABELS)  \
+			--machine-type $(GKE_MACH_TYPE) --num-nodes $(GKE_MIN_NODES)  \
+			--max-nodes $(GKE_MAX_NODES) --min-nodes $(GKE_MIN_NODES)     \
+			--tags $(GKE_NODE_TAG) --autoscaling-profile $(GKE_UTIL_PROF) \
+			--zone $(GKE_ZONE)
 
 # Get the `kubeconfig' credentials for the cluster. It will
 # be written to "~/.kube/config".
@@ -73,7 +73,7 @@ k8s-poll-ingress-ip:
 	@while [ -z "$(shell $(K8S_IP_POLL_CMD))" ]; do                      \
 		echo "Waiting for ingress: $(K8S_INGESS_NAME) to be created..."; \
 		sleep 10;                                                        \
-    done
+	done
 
 # Show the URL to the web-app.
 k8s-show:
