@@ -1,0 +1,152 @@
+# Deploy the application as an ingress on the Kubernetes cluster.
+
+# Define the pod for the backend.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sa-be
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: sa-be
+  template:
+    metadata:
+      labels:
+        run: sa-be
+    spec:
+      containers:
+      - image: skaushik0/14-848-sa-be:v0.1
+        imagePullPolicy: Always
+        name: sa-be
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+
+
+# Define the pod for the web-app.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sa-wa
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: sa-wa
+  template:
+    metadata:
+      labels:
+        run: sa-wa
+    spec:
+      containers:
+      - image: skaushik0/14-848-sa-wa:v0.1
+        imagePullPolicy: Always
+        name: sa-wa
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+          - name: SA_LOGIC_API_URL
+            value: 'http://sa-be.default:5000'
+
+
+# Define the pod for the frontend.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sa-fe
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: sa-fe
+  template:
+    metadata:
+      labels:
+        run: sa-fe
+    spec:
+      containers:
+      - image: skaushik0/14-848-sa-fe:v0.1
+        imagePullPolicy: Always
+        name: sa-fe
+        ports:
+        - containerPort: 80
+          protocol: TCP
+
+
+# Define services service for each of the
+# pods (backend, frontend and web-app).
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sa-be
+  namespace: default
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    run: sa-be
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sa-wa
+  namespace: default
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    run: sa-wa
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sa-fe
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    run: sa-fe
+  type: NodePort
+
+
+# Define an ingress for the frontend service.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sa-ing
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: sa-fe
+            port:
+              number: 80
+      - path: /sentiment
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: sa-wa
+            port:
+              number: 8080
