@@ -70,7 +70,7 @@ k8s-deploy:
 
 # The ingress on GKE takes a while to load and get the public IP.
 k8s-poll-ingress-ip:
-	@while [ -z "$(shell $(K8S_IP_POLL_CMD))" ]; do                      \
+	while [ -z "$(shell $(K8S_IP_POLL_CMD))" ]; do                       \
 		echo "Waiting for ingress: $(K8S_INGESS_NAME) to be created..."; \
 		sleep 10;                                                        \
 	done
