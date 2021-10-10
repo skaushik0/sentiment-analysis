@@ -1,3 +1,5 @@
 [submodule "k8s-mastery"]
 	path = k8s-mastery
 	url = https://github.com/rinormaloku/k8s-mastery.git
+[submodule "k8s-mastery/"]
+	url = ssh://git@github.com/skaushik0/k8s-mastery.git
