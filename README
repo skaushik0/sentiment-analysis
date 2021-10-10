@@ -1,4 +1,116 @@
 sentiment-analysis
 ------------------
 
+This repository is for deploying the "sentiment-analysis" web-app from
+[1] to Google Kubernetes Engine (GKE) on Google Cloud Platform (GCP).
 
+
+HOW-TO
+
+    All the steps (building Docker images, creating a Kubernetes cluster
+    on GKE, deployment and teardown of the cluster) can be done with the
+    `make' command, where the rules are in the Makefile in the repository
+    root.
+
+    The following steps assume that `git', `docker', `make', `gcloud'
+    and `kubectl' binaries installed on the host.
+
+    (a) The Docker images for the web-apps:
+            - sentiment-analysis-frontend ("sa-fe")
+            - sentiment-analysis-logic    ("sa-be"), and
+            - sentiment-analysis-webapp   ("sa-wa")
+
+        are built locally and pushed to DockerHub. This can be done
+        by running:
+
+            $ make build
+
+    (b) To push the built images to DockerHub, run:
+
+            $ make push
+
+        Note that this requires `docker' command line to be setup to
+        make authenticated requests to DockerHub. This can be done via:
+
+            $ docker login
+
+        The built images can be found at [2][3][4] on DockerHub.
+
+    (c) Now that we have the Docker images ready, we can deploy them to
+        the GKE cluster. To create a cluster, run:
+
+                $ make k8s-cluster-create
+
+        Before running the above command, make sure you have `gcloud'
+        setup to make authenticated requests to GCP. To setup, run:
+
+            $ gcluod init
+
+        To create a Kubernetes cluster on GKE, run:
+
+            $ make k8s-cluster-create
+
+        This will take a while, and the command line prompt returns
+        the current cluster details after successful creation.
+
+    (d) So, since the cluster is up and running, we can now go ahead
+        and deploy the web-app to GKE. Before we do that, we need to
+        setup `kubectl' to make requests to the cluster, and deploy
+        the application.
+
+        To get the credentials file (i.e., "kubeconfig" file), run:
+
+            $ make k8s-get-kubeconfig
+
+        which will place the configuration file in "~/.kube/config".
+
+        Then, we can deploy the resources defined in the "k8s-deploy"
+        file (this has the deployments, services and ingress for the
+        web-app) to the cluster, with:
+
+            $ make k8s-deploy
+
+        The ingress creation takes a while. Here, GKE has to create a
+        load balancer, and assign a public IP to it. To poll and notify
+        the ingress creation, run:
+
+            $ make k8s-poll-ingress-ip
+
+    (e) Finally, to get the link of the deployed web-app, run:
+
+            $ make k8s-show
+
+
+    (f) To delete resources on the cluster, and the cluster itself,
+        run:
+
+            $ make clean
+
+    All the above steps (except for "f") can be executed by running:
+
+            $ make
+
+STRUCTURE
+
+    - k8s-mastery/*
+      This is a forked repository of [1] as a sub-module, with a few
+      changes to build the apps in the Docker container itself (using
+      multi-stage builds), and added health-check routes for GKE
+      ingress service discovery.
+
+    - k8s-deploy.yaml
+      This file contains all the resources for deploying the web-app
+      to Kubernetes. It has deployments, services and ingresses.
+
+    - Makefile
+      This file contains scripts for easy cluster creation, deployments
+      and teardown.
+
+    - images/*
+      This directory contains screenshots of the web-app running on a
+      public IP.
+
+[1]: https://github.com/rinormaloku/k8s-mastery
+[2]: https://hub.docker.com/repository/docker/skaushik0/14-848-sa-be
+[3]: https://hub.docker.com/repository/docker/skaushik0/14-848-sa-wa
+[4]: https://hub.docker.com/repository/docker/skaushik0/14-848-sa-fe
